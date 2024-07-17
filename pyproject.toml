@@ -1,0 +1,26 @@
+[project]
+name = "emotion-in-political-language"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Evžen Wybitul", email = "wybitul.evzen@gmail.com"},
+]
+dependencies = [
+    "openai>=1.30.3",
+    "ipykernel>=6.29.4",
+    "polars>=0.20.30",
+    "rich>=13.7.1",
+    "typer>=0.12.3",
+    "pydra>=0.23",
+    "lets-plot>=4.3.3",
+    "pyarrow>=16.1.0",
+    "pandas>=2.2.2",
+    "dotenv>=0.0.5",
+]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
