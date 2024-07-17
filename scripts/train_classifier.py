@@ -14,6 +14,7 @@ import datasets
 import jsonlines
 import openai
 import polars as pl
+import torch
 import typer
 from dotenv import load_dotenv
 from peft import LoraConfig, TaskType
@@ -28,16 +29,14 @@ from src.emotion import utils
 
 # %%
 seed = 42
-train_size = 4000  # 80% of the data, i.e. 4 000 examples
-val_size = 500  # 10% of the data, i.e. 400 examples
-test_size = 5000 - train_size - val_size
+train_size = 0.9
 
-model_id = "google/flan-t5-base"
+model_id = "google/flan-t5-large"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForSequenceClassification.from_pretrained(model_id)
 
 
-labeled_data_path = "/Users/eugen/Downloads/Projects/emotion-in-political-language/data/batch/2024-07-17-12-17-14/results.parquet"
+labeled_data_path = "/mnt/ssd-1/mechinterp/gw1/evzen-test/data/batch/2024-07-17-12-17-14/results.parquet"
 
 utils.set_seed(seed)
 
@@ -45,19 +44,11 @@ data = datasets.Dataset.from_parquet(labeled_data_path)
 
 assert isinstance(data, datasets.Dataset)
 
-train_val_test = data.train_test_split(test_size=val_size, seed=seed)
+train_test = data.train_test_split(train_size=0.9, seed=seed)
 
-# Split the train+validation set into train and validation
-train_val_split = train_val_test["train"].train_test_split(
-    test_size=test_size, seed=seed
-)
 
 dataset = datasets.DatasetDict(
-    {
-        "train": train_val_split["train"],
-        "validation": train_val_split["test"],
-        "test": train_val_test["test"],
-    }
+    {"train": train_test["train"], "validation": train_test["test"]}
 )
 
 
@@ -90,6 +81,7 @@ dataset = dataset.map(
 
 
 # %%
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 os.environ["WANDB_PROJECT"] = "emotion-in-political-language"
 
 training_config = RewardConfig(
@@ -99,10 +91,12 @@ training_config = RewardConfig(
     eval_strategy="epoch",
     report_to="wandb",
     logging_steps=10,
+    bf16=True,
+    num_train_epochs=5,
     load_best_model_at_end=True,
     metric_for_best_model="accuracy",
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=16,
+    per_device_train_batch_size=4,
+    per_device_eval_batch_size=4,
     max_length=1024,
     remove_unused_columns=False,
 )
@@ -110,9 +104,10 @@ training_config = RewardConfig(
 peft_config = LoraConfig(
     task_type=TaskType.SEQ_CLS,
     inference_mode=False,
-    r=8,
+    r=16,
     lora_alpha=32,
     lora_dropout=0.1,
+    modules_to_save=["classifier"],
 )
 
 
@@ -133,4 +128,6 @@ trainer = RewardTrainer(
 )
 
 # %%
-trainer.train()
+model = trainer.train()
+
+# %%
