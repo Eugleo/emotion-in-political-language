@@ -15,7 +15,8 @@ dependencies = [
     "lets-plot>=4.3.3",
     "pyarrow>=16.1.0",
     "pandas>=2.2.2",
-    "dotenv>=0.0.5",
+    "python-dotenv>=1.0.1",
+    "jsonlines>=4.0.0",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
