@@ -90,7 +90,7 @@ def parse_response(response_path: Path) -> pl.DataFrame:
             _, speech_1_id, speech_2_id = r["custom_id"].split("-")
             response = r["response"]["body"]["choices"][0]["message"]["content"]
 
-            result = re.findall(r"result: (-?\d+)", response)
+            result = re.findall(r"[Rr]esult[*\s]*:[*\s]*(-?\d+)", response)
             if len(result) != 1:
                 print(f"Unable to parse response: {response}")
                 result = -1
