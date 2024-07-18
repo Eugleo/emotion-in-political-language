@@ -19,17 +19,23 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 # %%
 model_id = "google/flan-t5-large"
 
-device = "cuda:0"
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 model = AutoModelForSequenceClassification.from_pretrained(model_id).to(device)
 model = PeftModel.from_pretrained(model, "Eugleo/results").to(device)
+
+# Switch to bf16
+model = model.to(torch.bfloat16)
+
+# Apply torch.compile() for optimization
+model = torch.compile(model)
 
 model.eval()
 
 # %%
 dataset = datasets.load_dataset(
     "Eugleo/us-congressional-speeches", streaming=True
-).filter(lambda x: 64 / 1.5 < len(x["text"]) < 1024 / 1.5)
+).filter(lambda x: 64 / 1.5 < x["word_count"] < 1024 / 1.5)
 
 # %%
 # Initialize tokenizer
@@ -50,9 +56,10 @@ def get_predictions(texts, device):
     inputs = tokenizer(texts, truncation=True, padding=True, return_tensors="pt").to(
         device
     )
-    outputs = model(
-        input_ids=inputs["input_ids"], attention_mask=inputs["attention_mask"]
-    )
+    with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        outputs = model(
+            input_ids=inputs["input_ids"], attention_mask=inputs["attention_mask"]
+        )
     probabilities = outputs.logits.softmax(dim=-1)[:, 0]
     return probabilities
 
