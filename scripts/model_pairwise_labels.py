@@ -3,7 +3,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import datasets
 import jsonlines
@@ -14,10 +14,6 @@ import typer
 from dotenv import load_dotenv
 from polars import col as c
 from rich.pretty import pprint
-
-# Add the project root directory to the Python path
-project_root = Path(__file__).resolve().parent.parent
-sys.path.append(str(project_root))
 
 from src.emotion import utils
 
