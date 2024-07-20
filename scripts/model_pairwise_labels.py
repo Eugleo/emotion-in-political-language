@@ -27,7 +27,7 @@ DEFAULT_BATCH_DIR = Path("data/batch/")
 
 
 def cost_estimate(
-    texts: list[str], token_chars: int = 4, token_cost=0.00000015
+    texts: list[str], token_chars: int = 4, token_cost=0.00000008
 ) -> float:
     return sum(len(text) / token_chars for text in texts) * token_cost
 
@@ -182,7 +182,7 @@ def download_batch(batch_dir: Path):
         print(f"Batch {batch.id} is not completed yet.")
         pprint(batch)
         print()
-        return
+        return False
     assert batch.output_file_id is not None
 
     file_response = client.files.content(batch.output_file_id)
@@ -195,15 +195,30 @@ def download_batch(batch_dir: Path):
     results = input_pairs.join(results, on=["speech_1_id", "speech_2_id"])
     results.write_parquet(batch_dir / "results.parquet")
 
+    return True
+
 
 @app.command()
 def download(
     batch_dirs: Annotated[
         list[Path], typer.Argument(exists=True, file_okay=False, dir_okay=True)
     ],
+    upload: Annotated[bool, typer.Option()] = False,
+    dataset_id: Annotated[
+        str, typer.Option("--dataset")
+    ] = "Eugleo/us-congressional-speeches-emotionality-pairs",
 ):
-    for batch_dir in batch_dirs:
-        download_batch(batch_dir)
+    batch_downloaded = all(download_batch(batch_dir) for batch_dir in batch_dirs)
+
+    if upload:
+        if not batch_downloaded:
+            print("Skipping upload, some batches failed to download.")
+            return
+
+        paths = [batch_dir / "results.parquet" for batch_dir in batch_dirs]
+        dataset = datasets.Dataset.from_parquet(paths)  # type: ignore
+        assert isinstance(dataset, datasets.Dataset)
+        dataset.push_to_hub(dataset_id)
 
 
 if __name__ == "__main__":
