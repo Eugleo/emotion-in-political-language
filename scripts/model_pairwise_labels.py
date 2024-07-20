@@ -27,7 +27,7 @@ DEFAULT_BATCH_DIR = Path("data/batch/")
 
 
 def cost_estimate(
-    texts: list[str], token_chars: int = 4, token_cost=0.00000008
+    texts: list[str], token_chars: int = 4, token_cost=0.00000015
 ) -> float:
     return sum(len(text) / token_chars for text in texts) * token_cost
 
