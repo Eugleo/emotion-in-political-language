@@ -12,10 +12,12 @@ import openai
 import polars as pl
 import typer
 from dotenv import load_dotenv
-from polars import col as c
 from rich.pretty import pprint
 
-from src.emotion import utils
+project_root = Path(__file__).resolve().parent.parent
+sys.path.append(str(project_root))
+
+from src.emotion import utils  # noqa: E402
 
 app = typer.Typer()
 
@@ -199,14 +201,14 @@ def download(
     batch_dirs: Annotated[
         list[Path], typer.Argument(exists=True, file_okay=False, dir_okay=True)
     ],
-    upload: Annotated[bool, typer.Option()] = False,
+    push_to_hub: Annotated[bool, typer.Option()] = False,
     dataset_id: Annotated[
         str, typer.Option("--dataset")
     ] = "Eugleo/us-congressional-speeches-emotionality-pairs",
 ):
     batch_downloaded = all(download_batch(batch_dir) for batch_dir in batch_dirs)
 
-    if upload:
+    if push_to_hub:
         if not batch_downloaded:
             print("Skipping upload, some batches failed to download.")
             return

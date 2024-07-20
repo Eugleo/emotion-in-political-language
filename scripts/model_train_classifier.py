@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -9,7 +10,10 @@ from peft import LoraConfig, TaskType
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from trl import RewardConfig, RewardTrainer
 
-from src.emotion import utils
+project_root = Path(__file__).resolve().parent.parent
+sys.path.append(str(project_root))
+
+from src.emotion import utils  # noqa: E402
 
 
 def tokenize(batch, *, tokenizer):
