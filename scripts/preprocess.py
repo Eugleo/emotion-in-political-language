@@ -93,18 +93,17 @@ def write_speeches(
         with open(speech, encoding="Windows-1252") as f:
             # Skip the first line
             next(f)
-            pl.DataFrame(
-                [
-                    # We need to do this since the text sometimes contains the separator
-                    {"speech_id": int(line[:9]), "text": line[10:]}
-                    for line in f
-                    if not any(
-                        ammendment in line for ammendment in AMMENDMENT_INDICATORS
-                    )
-                ]
-            ).join(metadata, on="speech_id", how="inner").write_parquet(
-                destination / f"speeches_{i}.parquet"
-            )
+            speeches = []
+            for line in f:
+                if any(ammendment in line for ammendment in AMMENDMENT_INDICATORS):
+                    continue
+                id_span = line.find("|")
+                speech_id = int(line[:id_span])
+                text = line[id_span + 1 :]
+                speeches.append({"speech_id": speech_id, "text": text})
+            pl.DataFrame(speeches).join(
+                metadata, on="speech_id", how="inner"
+            ).write_parquet(destination / f"speeches_{i}.parquet")
 
 
 @app.command()
