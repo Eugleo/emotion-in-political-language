@@ -105,14 +105,6 @@ def write_speeches(
             ).write_parquet(destination / f"speeches_{i}.parquet")
 
 
-def upload_to_huggingface(
-    dataset: datasets.Dataset, name: str, progress: Progress
-) -> None:
-    upload_task = progress.add_task(f"Uploading {name} to HuggingFace...", total=None)
-    dataset.push_to_hub(f"Eugleo/{name}")
-    progress.stop_task(upload_task)
-
-
 @app.command()
 def main(
     original: Annotated[
@@ -138,8 +130,7 @@ def main(
 ) -> None:
     if processed.exists():
         should_write = typer.confirm(
-            f"{processed} already exists. Do you want to overwrite it?",
-            abort=True,
+            f"{processed} already exists. Do you want to overwrite it?"
         )
     else:
         should_write = True
@@ -150,26 +141,22 @@ def main(
             metadata = load_metadata(original, progress)
             write_speeches(original, processed, metadata, progress)
 
-        if upload:
-            dotenv.load_dotenv()
+    if upload:
+        dotenv.load_dotenv()
 
-            dataset = datasets.Dataset.from_parquet(
-                processed / "*.parquet", streaming=True
-            )
-            assert isinstance(dataset, datasets.Dataset)
+        dataset = datasets.Dataset.from_parquet(str(processed / "*.parquet"))
+        assert isinstance(dataset, datasets.Dataset)
 
-            upload_to_huggingface(dataset, "Eugleo/us-congressional-speeches", progress)
+        dataset.push_to_hub("Eugleo/us-congressional-speeches")
 
-            partial_dataset = dataset.filter(
-                lambda s: 64 / 1.5 < s["word_count"] < 1024 / 1.5
-            ).filter(
-                lambda s: not any(
-                    ammendment in s["text"] for ammendment in AMMENDMENT_INDICATORS
-                )
+        partial_dataset = dataset.filter(
+            lambda s: 64 / 1.5 < s["word_count"] < 1024 / 1.5
+        ).filter(
+            lambda s: not any(
+                ammendment in s["text"] for ammendment in AMMENDMENT_INDICATORS
             )
-            upload_to_huggingface(
-                partial_dataset, "Eugleo/us-congressional-speeches-subset", progress
-            )
+        )
+        partial_dataset.push_to_hub("Eugleo/us-congressional-speeches-subset")
 
 
 if __name__ == "__main__":
