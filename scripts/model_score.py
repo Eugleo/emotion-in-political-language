@@ -32,9 +32,7 @@ def collate_fn(batch):
 
 @torch.inference_mode()
 def get_score(model, tokenizer, texts, device):
-    inputs = tokenizer(
-        texts, truncation=True, padding=True, return_tensors="pt", max_length=1024
-    ).to(device)
+    inputs = tokenizer(texts, truncation=True, return_tensors="pt").to(device)
     with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
         outputs = model(
             input_ids=inputs["input_ids"], attention_mask=inputs["attention_mask"]
@@ -48,11 +46,11 @@ app = typer.Typer()
 
 @app.command()
 def train(
-    num: Annotated[int, typer.Argument()] = 128,
+    num: Annotated[int, typer.Argument()] = 5000,
     output_dir: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)] = Path(
         "data/predictions"
     ),
-    batch_size: Annotated[int, typer.Option()] = 32,
+    batch_size: Annotated[int, typer.Option()] = 1,
     dataset_id: Annotated[
         str, typer.Option("--dataset")
     ] = "Eugleo/us-congressional-speeches-subset",
@@ -61,7 +59,7 @@ def train(
         str, typer.Option("--model")
     ] = "Eugleo/gemma-7b-emotionality",
     seed: Annotated[int, typer.Option()] = 42,
-    cuda: Annotated[int, typer.Option()] = 1,
+    cuda: Annotated[int, typer.Option()] = 0,
 ):
     utils.set_seed(seed)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(cuda)
@@ -73,16 +71,15 @@ def train(
 
     tokenizer = AutoTokenizer.from_pretrained(base_model_id)
     base_model = AutoModelForSequenceClassification.from_pretrained(
-        base_model_id, device_map=device, torch_dtype=torch.bfloat16
+        base_model_id, device_map=device, torch_dtype=torch.bfloat16, num_labels=1
     )
     model = PeftModel.from_pretrained(base_model, trained_model_id)
+    model = base_model
     model.eval()
 
     dataset = datasets.load_dataset(dataset_id, split="train")
     assert isinstance(dataset, datasets.Dataset)
 
-    num = 128
-    batch_size = 32
     subset = torch.randint(0, len(dataset), (num,)).tolist()
 
     results = []
