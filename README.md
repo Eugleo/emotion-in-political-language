@@ -5,7 +5,7 @@ _Author: Evžen Wybitul_
 
 This project aims to replicate the analysis of the evolution of emotionality in congressional speeches from [Emotion and reason in political language](https://academic.oup.com/ej/article/132/643/1037/6490125) (G Gennaro and E. Ash, 2021). We use a new methodology based on a transformer scoring model, as opposed to the model based on single-words from the original study.
 
-Our main result is the following timeline plot, which shows the percentage of emotional speeches in different years. The main findings are very similar to the original study, and they even manage to recovers slightly more signal from the speeches, which gives us some evidence as to the utility of the new method. For a full report, please see [this document](assets/report.pdf).
+Our main result is the following timeline plot, which shows a proxy for the percentage of emotional speeches in different years. The main findings are very similar to the original study, and they even manage to recovers slightly more signal from the speeches, which gives us some evidence as to the utility of the new method. For a full report, please see [this document](assets/report.pdf).
 
 ![emotionality timeline](assets/emotionality_timeline_readme.svg)
 
