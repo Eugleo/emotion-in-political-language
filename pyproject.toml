@@ -32,3 +32,6 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+
+[tool.ruff]
+ignore = ["F403", "F405"]
