@@ -57,7 +57,7 @@ def train(
     base_model_id: Annotated[str, typer.Option("--base-model")] = "google/gemma-2-9b",
     trained_model_id: Annotated[
         str, typer.Option("--model")
-    ] = "Eugleo/gemma-7b-emotionality",
+    ] = "Eugleo/gemma-2-9b-emotionality",
     seed: Annotated[int, typer.Option()] = 42,
     cuda: Annotated[int, typer.Option()] = 0,
 ):
@@ -74,7 +74,6 @@ def train(
         base_model_id, device_map=device, torch_dtype=torch.bfloat16, num_labels=1
     )
     model = PeftModel.from_pretrained(base_model, trained_model_id)
-    model = base_model
     model.eval()
 
     dataset = datasets.load_dataset(dataset_id, split="train")
