@@ -60,6 +60,7 @@ def train(
     wandb_project: Annotated[str, typer.Option()] = "emotion-in-political-language",
     lora_r: Annotated[int, typer.Option()] = 8,
     lora_alpha: Annotated[int, typer.Option()] = 16,
+    resume: Annotated[bool, typer.Option()] = False,
 ):
     utils.set_seed(seed)
 
@@ -68,7 +69,7 @@ def train(
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForSequenceClassification.from_pretrained(
-        model_id, device_map="auto", torch_dtype=torch.bfloat16
+        model_id, device_map="auto", torch_dtype=torch.bfloat16, num_labels=1
     )
 
     dataset = datasets.load_dataset(dataset_id)
@@ -90,8 +91,8 @@ def train(
         eval_strategy="steps",
         report_to="wandb",
         logging_steps=100,
-        eval_steps=15000,
-        save_steps=15000,
+        eval_steps=2500,
+        save_steps=2500,
         bf16=True,
         num_train_epochs=1,
         load_best_model_at_end=True,
@@ -121,7 +122,7 @@ def train(
         compute_metrics=compute_metrics,
     )
 
-    model = trainer.train()
+    model = trainer.train(resume_from_checkpoint=resume)
 
     model.push_to_hub(trained_model_id)
 
