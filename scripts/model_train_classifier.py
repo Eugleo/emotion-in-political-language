@@ -6,6 +6,7 @@ from typing import Annotated
 import datasets
 import torch
 import typer
+from dotenv import load_dotenv
 from peft import LoraConfig, TaskType
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from trl import RewardConfig, RewardTrainer
@@ -50,7 +51,7 @@ def train(
     dataset_id: Annotated[
         str, typer.Option("--dataset")
     ] = "Eugleo/us-congressional-speeches-emotionality-pairs",
-    model_id: Annotated[str, typer.Option("--model")] = "google/gemma-7b",
+    model_id: Annotated[str, typer.Option("--model")] = "google/gemma-2-9b",
     trained_model_id: Annotated[
         str, typer.Option("--trained-model")
     ] = "Eugleo/gemma-7b-emotionality",
@@ -63,6 +64,7 @@ def train(
     resume: Annotated[bool, typer.Option()] = False,
 ):
     utils.set_seed(seed)
+    load_dotenv()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(cuda)
     os.environ["WANDB_PROJECT"] = wandb_project
@@ -97,8 +99,9 @@ def train(
         num_train_epochs=1,
         load_best_model_at_end=True,
         metric_for_best_model="accuracy",
-        per_device_train_batch_size=2,
-        per_device_eval_batch_size=2,
+        per_device_train_batch_size=1,
+        per_device_eval_batch_size=1,
+        gradient_accumulation_steps=8,
         max_length=1024,
         remove_unused_columns=False,
     )
@@ -110,6 +113,12 @@ def train(
         lora_alpha=lora_alpha,
         lora_dropout=0.1,
         modules_to_save=["classifier"],
+        target_modules=[
+            "q_proj",
+            "v_proj",
+            "o_proj",
+            "down_proj",
+        ],
     )
 
     trainer = RewardTrainer(

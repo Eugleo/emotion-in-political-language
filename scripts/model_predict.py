@@ -9,6 +9,7 @@ import jsonlines
 import polars as pl
 import torch
 import typer
+from dotenv import load_dotenv
 from peft import PeftModel
 from rich.progress import track
 from torch.utils.data import DataLoader
@@ -55,7 +56,7 @@ def train(
     dataset_id: Annotated[
         str, typer.Option("--dataset")
     ] = "Eugleo/us-congressional-speeches-subset",
-    base_model_id: Annotated[str, typer.Option("--base-model")] = "google/gemma-7b",
+    base_model_id: Annotated[str, typer.Option("--base-model")] = "google/gemma-2-9b",
     trained_model_id: Annotated[
         str, typer.Option("--model")
     ] = "Eugleo/gemma-7b-emotionality",
