@@ -25,8 +25,8 @@ def tokenize(batch, *, tokenizer):
         chosen.append(batch["speech_1"][i] if pref == 0 else batch["speech_2"][i])
         rejected.append(batch["speech_2"][i] if pref == 0 else batch["speech_1"][i])
 
-    chosen_tokenized = tokenizer(chosen, truncation=True)
-    rejected_tokenized = tokenizer(rejected, truncation=True)
+    chosen_tokenized = tokenizer(chosen, truncation=True, max_length=1024)
+    rejected_tokenized = tokenizer(rejected, truncation=True, max_length=1024)
 
     return {
         "input_ids_chosen": chosen_tokenized["input_ids"],
@@ -85,17 +85,19 @@ def train(
 
     training_config = RewardConfig(
         output_dir="results",
-        save_total_limit=1,
-        save_strategy="epoch",
-        eval_strategy="epoch",
+        save_total_limit=2,
+        save_strategy="steps",
+        eval_strategy="steps",
         report_to="wandb",
-        logging_steps=10,
+        logging_steps=100,
+        eval_steps=15000,
+        save_steps=15000,
         bf16=True,
-        num_train_epochs=5,
+        num_train_epochs=1,
         load_best_model_at_end=True,
         metric_for_best_model="accuracy",
-        per_device_train_batch_size=1,
-        per_device_eval_batch_size=1,
+        per_device_train_batch_size=2,
+        per_device_eval_batch_size=2,
         max_length=1024,
         remove_unused_columns=False,
     )
